@@ -1,0 +1,29 @@
+Vagrant.configure("2") do |config|
+  # Base box configuration
+  config.vm.box = "secure-environment.box" # Use the prebuilt Packer image
+  config.vm.hostname = "secure-env"
+
+  # Enable GUI for the VM
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = true
+    vb.memory = "4096"
+    vb.cpus = 4
+  end
+
+  # Network configurations
+  # Forward ports for specific services
+  config.vm.network "forwarded_port", guest: 8200, host: 8200, protocol: "tcp", id: "vault"   # Vault
+  config.vm.network "forwarded_port", guest: 9200, host: 9200, protocol: "tcp", id: "boundary" # Boundary
+  config.vm.network "forwarded_port", guest: 9042, host: 9042, protocol: "tcp", id: "cassandra" # Cassandra
+  config.vm.network "forwarded_port", guest: 51820, host: 51820, protocol: "udp", id: "tailscale" # Tailscale VPN
+
+  # Private network for the VM
+  config.vm.network "private_network", type: "dhcp"
+
+  # Provisioning
+  config.vm.provision "shell", path: "scripts/startup.sh"
+
+  # Shared folders for logs and configurations
+  config.vm.synced_folder "./logs", "/vagrant/logs"
+  config.vm.synced_folder "./config", "/vagrant/config"
+end
